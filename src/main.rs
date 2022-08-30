@@ -45,7 +45,7 @@ fn main() {
     let host = "localhost:7624";
 
     let Connection { r, mut w} = indi::connection::Connection::connect_tcp(host).unwrap();
-    let Connection { r : r_blob, w: mut _w_blob } = indi::connection::Connection::connect_tcp(host).unwrap();
+    let Connection { r : r_blob, w: mut w_blob } = indi::connection::Connection::connect_tcp(host).unwrap();
 
     //let mut conn_control = std::sync::Mutex::new(indi::connection::Connection::connect(host).unwrap());
 
@@ -68,8 +68,10 @@ fn main() {
 
 
 
+
+    w_blob.send_enable_blob(indi::connection::EnableBlobSemantics::Only).unwrap();
+    w_blob.send_get_properties().unwrap();
     w.send_get_properties().unwrap();
-    w.send_enable_blob("", indi::connection::EnableBlobSemantics::Also).unwrap();
 
     loop {
         if quit.load(Relaxed) {
@@ -118,14 +120,14 @@ fn main() {
                         eprintln!("{}", msg);
                     }
 
-                    //
-                    // IncomingMsg::Unparsed(msg) => {
-                    //     eprintln!("{:?}", msg);
-                    // }
-
-                    IncomingMsg::Unparsed => {
-                        eprintln!("Unparsed Message");
+                    IncomingMsg::DelProperty(del) => {
+                        eprintln!("{}", del);
                     }
+
+                    IncomingMsg::Unparsed(msg) => {
+                        eprintln!("{:?}", msg);
+                    }
+
                 }
                 continue;
             }

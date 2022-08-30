@@ -33,7 +33,7 @@ pub struct DefBlobVector {
 
 impl std::fmt::Display for DefBlobVector {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{} {}::{}(blob)\n", self.state, self.device, self.label).unwrap();
+        write!(f, "{} {}::{}(blob)\n", self.state, self.device, self.name).unwrap();
         for v in &self.blobs {
             write!(f, "\t{}\n", v).unwrap();
         }
@@ -47,7 +47,7 @@ impl std::fmt::Display for DefBlobVector {
 
 impl std::fmt::Display for DefBlobValue {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{} = {}", self.label, self.value)
+        write!(f, "{} = {}", self.name, self.value)
     }
 }
 

@@ -1,3 +1,5 @@
+use crate::indi::del::DelProperty;
+
 pub mod common;
 pub mod switch;
 pub mod text;
@@ -6,6 +8,7 @@ pub mod light;
 pub mod blob;
 pub mod message;
 pub mod connection;
+pub mod del;
 
 #[derive(Debug, serde::Deserialize, PartialEq)]
 pub enum IncomingMsg {
@@ -37,15 +40,18 @@ pub enum IncomingMsg {
     #[serde(rename = "message")]
     Message(message::Message),
 
+    #[serde(rename = "delProperty")]
+    DelProperty(DelProperty),
+
     #[serde(
         alias = "getProperties",
         alias = "newNumberVector",
         alias = "newLightVector",
         alias = "newSwitchVector",
         alias = "newTextVector",
-        alias = "delProperty",
+        //alias = "delProperty",
         //alias = "message"
     )]
-    //Unparsed(std::collections::BTreeMap<String, String>),
-    Unparsed
+    Unparsed(std::collections::BTreeMap<String, String>),
+    //Unparsed(String)
 }

@@ -46,7 +46,7 @@ pub struct DefSwitchVector {
 
 impl std::fmt::Display for DefSwitchVector {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{} {}::{}(switch)\n", self.state, self.device, self.label).unwrap();
+        write!(f, "{} {}::{}(switch)\n", self.state, self.device, self.name).unwrap();
         for switch in &self.switches {
             write!(f, "\t{}\n", switch).unwrap();
         }
@@ -61,10 +61,10 @@ impl std::fmt::Display for DefSwitchVector {
 impl std::fmt::Display for DefSwitchValue {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if self.value == IndiSwitch::On {
-            write!(f, "{} *", self.label)
+            write!(f, "{} *", self.name)
         }
         else {
-            write!(f, "{}", self.label)
+            write!(f, "{}", self.name)
         }
     }
 }

@@ -37,7 +37,7 @@ pub struct DefNumberVector {
 
 impl std::fmt::Display for DefNumberVector {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{} {}::{}(numbers)\n", self.state, self.device, self.label).unwrap();
+        write!(f, "{} {}::{}(numbers)\n", self.state, self.device, self.name).unwrap();
         for v in &self.numbers {
             write!(f, "\t{}\n", v).unwrap();
         }
@@ -51,7 +51,7 @@ impl std::fmt::Display for DefNumberVector {
 
 impl std::fmt::Display for DefNumberValue {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{} = {} | [{}, {}], Δ{}, {}", self.label, self.value, self.min, self.max, self.step, self.format)
+        write!(f, "{} = {} | [{}, {}], Δ{}, {}", self.name, self.value, self.min, self.max, self.step, self.format)
     }
 }
 

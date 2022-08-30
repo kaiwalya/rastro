@@ -33,7 +33,7 @@ pub struct DefTextVector {
 
 impl std::fmt::Display for DefTextVector {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{} {}::{}(text)\n", self.state, self.device, self.label).unwrap();
+        write!(f, "{} {}::{}(text)\n", self.state, self.device, self.name).unwrap();
         for v in &self.texts {
             write!(f, "\t{}\n", v).unwrap();
         }
@@ -47,7 +47,7 @@ impl std::fmt::Display for DefTextVector {
 
 impl std::fmt::Display for DefTextValue {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{} = {}", self.label, self.value)
+        write!(f, "{} = {}", self.name, self.value)
     }
 }
 

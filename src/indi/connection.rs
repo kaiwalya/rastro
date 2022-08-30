@@ -18,9 +18,9 @@ pub trait OutgoingMsg {
 
 #[derive(serde::Serialize)]
 pub enum EnableBlobSemantics {
-    Always,
     Never,
-    Also
+    Also,
+    Only
 }
 
 pub struct Reader<T: std::io::Read> {
@@ -28,7 +28,8 @@ pub struct Reader<T: std::io::Read> {
 }
 
 pub struct Writer<T: std::io::Write> {
-    pub w: T
+    pub w: T,
+    dbg_name: String
 }
 
 fn normalize_error(err: DeError) -> Box<dyn Error> {
@@ -51,17 +52,20 @@ impl<T: std::io::Read> Reader<T> {
     pub fn read(&mut self) -> Result<IncomingMsg, Box<dyn Error>> {
 
         return quick_xml::de::from_reader::<_, IncomingMsg>(&mut self.r)
+            .map(|res| {
+                return res;
+            })
             .map_err(|err| normalize_error(err));
     }
 
 }
 
 impl<T: std::io::Write> Writer<T> {
-    pub fn new(w: T) -> Self {
-        return Self {w}
+    pub fn new(w: T, dbg_name: &str) -> Self {
+        return Self {w, dbg_name: String::from(dbg_name)}
     }
     fn write_bytes(&mut self, bytes: Vec<u8>) -> Result<(), Box<dyn Error>> {
-        eprintln!("writing {}", String::from_utf8(bytes.clone()).unwrap());
+        eprintln!("{} writing {}", self.dbg_name, String::from_utf8(bytes.clone()).unwrap());
         return std::io::Write::write(&mut self.w, bytes.as_slice())
             .map(|_| ())
             .map_err(|err| err.into());
@@ -83,18 +87,17 @@ impl<T: std::io::Write> Writer<T> {
         return self.write_bytes(vector);
     }
 
-    pub fn send_enable_blob(&mut self, device: &str, semantics: EnableBlobSemantics) -> Result<(), Box<dyn Error>>{
+    pub fn send_enable_blob(&mut self, semantics: EnableBlobSemantics) -> Result<(), Box<dyn Error>>{
         let mut writer = quick_xml::Writer::new(Cursor::new(Vec::new()));
 
-        let el_writer = writer.create_element("enableBLOB")
-            .with_attribute(("device", device));
+        let el_writer = writer.create_element("enableBLOB");
 
         match semantics {
             EnableBlobSemantics::Also => {
                 el_writer.write_text_content(BytesText::from_plain_str("Also")).unwrap();
             },
-            EnableBlobSemantics::Always => {
-                el_writer.write_text_content(BytesText::from_plain_str("Always")).unwrap();
+            EnableBlobSemantics::Only => {
+                el_writer.write_text_content(BytesText::from_plain_str("Only")).unwrap();
             },
             EnableBlobSemantics::Never => {
                 el_writer.write_text_content(BytesText::from_plain_str("Never")).unwrap();
@@ -112,12 +115,16 @@ impl Connection<TcpStream, TcpStream> {
         let stream= TcpStream::connect(host).unwrap();
         stream.set_read_timeout(Some(Duration::from_millis(200))).unwrap();
 
+        let localAddress = stream.local_addr().unwrap();
+        let dbg_name = localAddress.to_string();
+
+
         let w = stream.try_clone().unwrap();
         let r = stream;
 
 
         let reader = Reader::new(r);
-        let writer= Writer::new(w);
+        let writer= Writer::new(w, &dbg_name);
 
         return Ok(Self {
             r: reader,

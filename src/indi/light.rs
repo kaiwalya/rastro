@@ -31,7 +31,7 @@ pub struct DefLightVector {
 
 impl std::fmt::Display for DefLightVector {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{} {}::{}(Light)\n", self.state, self.device, self.label).unwrap();
+        write!(f, "{} {}::{}(Light)\n", self.state, self.device, self.name).unwrap();
         for v in &self.lights {
             write!(f, "\t{}\n", v).unwrap();
         }
@@ -45,6 +45,6 @@ impl std::fmt::Display for DefLightVector {
 
 impl std::fmt::Display for DefLightValue {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{} {}", self.value, self.label)
+        write!(f, "{} {}", self.value, self.name)
     }
 }
