@@ -65,7 +65,7 @@ impl<T: std::io::Write> Writer<T> {
         return Self {w, dbg_name: String::from(dbg_name)}
     }
     fn write_bytes(&mut self, bytes: Vec<u8>) -> Result<(), Box<dyn Error>> {
-        eprintln!("{} writing {}", self.dbg_name, String::from_utf8(bytes.clone()).unwrap());
+        log::trace!("{} writing {}", self.dbg_name, String::from_utf8(bytes.clone()).unwrap());
         return std::io::Write::write(&mut self.w, bytes.as_slice())
             .map(|_| ())
             .map_err(|err| err.into());
@@ -115,8 +115,8 @@ impl Connection<TcpStream, TcpStream> {
         let stream= TcpStream::connect(host).unwrap();
         stream.set_read_timeout(Some(Duration::from_millis(200))).unwrap();
 
-        let localAddress = stream.local_addr().unwrap();
-        let dbg_name = localAddress.to_string();
+        let local_address = stream.local_addr().unwrap();
+        let dbg_name = local_address.to_string();
 
 
         let w = stream.try_clone().unwrap();

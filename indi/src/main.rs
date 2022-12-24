@@ -1,4 +1,5 @@
 mod indi;
+
 use std::io::ErrorKind;
 use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
@@ -34,15 +35,20 @@ fn start_reader_loop<T: std::io::Read + Send + 'static>(name: String, sender: st
                 }
             }
         }
-        eprintln!("Quitting {} thread!", name);
+        log::error!("Quitting {} thread!", name);
     });
     return reader;
 }
 
 fn main() {
 
+    env_logger::init();
+
+
     let host = "mobile-mini.local:7624";
-    let host = "localhost:7624";
+    //indi://localhost:7624/:deviceId/:propertyVectorId/:propertyId
+    //await openAsCamera("indi://localhost:7624/:deviceId")
+    //let host = "localhost:7624";
 
     let Connection { r, mut w} = indi::connection::Connection::connect_tcp(host).unwrap();
     let Connection { r : r_blob, w: mut w_blob } = indi::connection::Connection::connect_tcp(host).unwrap();
@@ -75,57 +81,56 @@ fn main() {
 
     loop {
         if quit.load(Relaxed) {
-            eprintln!("Quiting main thread!");
+            log::error!("Quiting main thread!");
             break;
         }
         let msg = receiver.try_recv();
         match msg {
             Ok(doc) => {
-
                 match doc {
                     IncomingMsg::DefSwitchVector(def) => {
-                        eprintln!("{}", def);
+                        log::trace!("{}", def);
                     },
                     IncomingMsg::SetSwitchVector(def) => {
-                        eprintln!("{}", def);
+                        log::trace!("{}", def);
                     }
 
                     IncomingMsg::DefTextVector(def) => {
-                        eprintln!("{}", def);
+                        log::trace!("{}", def);
                     },
                     IncomingMsg::SetTextVector(def) => {
-                        eprintln!("{}", def);
+                        log::trace!("{}", def);
                     },
 
                     IncomingMsg::DefLightVector(def) => {
-                        eprintln!("{}", def);
+                        log::trace!("{}", def);
                     },
 
                     IncomingMsg::DefNumberVector(def) => {
-                        eprintln!("{}", def);
+                        log::trace!("{}", def);
                     },
                     IncomingMsg::SetNumberVector(def) => {
-                        eprintln!("{}", def);
+                        log::trace!("{}", def);
                     },
 
                     IncomingMsg::DefBlobVector(def) => {
-                        eprintln!("{}", def);
+                        log::trace!("{}", def);
                     },
 
                     IncomingMsg::SetBlobVector(def) => {
-                        eprintln!("{}", def);
+                        log::trace!("{}", def);
                     },
 
                     IncomingMsg::Message(msg) => {
-                        eprintln!("{}", msg);
+                        log::trace!("{}", msg);
                     }
 
                     IncomingMsg::DelProperty(del) => {
-                        eprintln!("{}", del);
+                        log::trace!("{}", del);
                     }
 
                     IncomingMsg::Unparsed(msg) => {
-                        eprintln!("{:?}", msg);
+                        log::trace!("{:?}", msg);
                     }
 
                 }

@@ -29,6 +29,6 @@ impl std::fmt::Display for DelProperty {
             write!(f, "{:?}\n", self.extra).unwrap();
         }
 
-        return std::fmt::Result::Ok(());
+        return Ok(());
     }
 }

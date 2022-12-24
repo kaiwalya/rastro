@@ -1,5 +1,3 @@
-use crate::indi::del::DelProperty;
-
 pub mod common;
 pub mod switch;
 pub mod text;
@@ -41,7 +39,7 @@ pub enum IncomingMsg {
     Message(message::Message),
 
     #[serde(rename = "delProperty")]
-    DelProperty(DelProperty),
+    DelProperty(del::DelProperty),
 
     #[serde(
         alias = "getProperties",
@@ -55,3 +53,4 @@ pub enum IncomingMsg {
     Unparsed(std::collections::BTreeMap<String, String>),
     //Unparsed(String)
 }
+
