@@ -3,5 +3,6 @@
 members = [
     "indi",
     "celestial",
-    "fits"
+    "fits",
+    "rastro"
 ]
