@@ -94,8 +94,8 @@ impl Display for IncomingMsg {
 #[cfg(test)]
 mod test {
     use quick_xml::DeError;
-    use serde::Deserialize;
-    use crate::indi::IncomingMsg;
+    
+    
     use crate::indi::switch::DefSwitchVector;
 
     #[test]

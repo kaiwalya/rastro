@@ -7,7 +7,7 @@ use ndarray::{Array, NdProducer};
 use ndarray_stats::QuantileExt;
 use plotters::prelude::*;
 
-use rustronomy_fits::Fits;
+
 use ndarray_image_ext::{NDArrayExt};
 use crate::debayer::debayer;
 use crate::load_fits::{ParsedFitsFile};
@@ -52,9 +52,9 @@ pub fn detect_spikes(name: &str, array: &ndarray::ArrayView<f32, ndarray::Ix2>) 
                 range(loc.1, bg_span, height)
             ]);
             let central = array[loc];
-            let min = *win.min().unwrap();
+            let _min = *win.min().unwrap();
             let mean = win.mean().unwrap();
-            let max = *win.max().unwrap();
+            let _max = *win.max().unwrap();
             if (loc.0 == loc.1) && (loc.0 % 100 == 0){
                 log::trace!("bg@({}, {})", loc.0, loc.1);
             }
@@ -147,7 +147,7 @@ pub fn fits() {
     log::info!("{:?}", hdu0);
 
     let rgb_array = debayer(&hdu0).unwrap();
-    let shape = rgb_array.shape();
+    let _shape = rgb_array.shape();
 
 
 

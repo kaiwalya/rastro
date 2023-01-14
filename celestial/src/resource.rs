@@ -1,9 +1,9 @@
-use std::io::{Read, Write};
+use std::io::{Write};
 use std::pin::Pin;
 use std::task::{Context, Poll};
 use async_trait::async_trait;
-use futures::{TryFutureExt, TryStreamExt, AsyncBufRead};
-use tokio::io::{AsyncRead, AsyncWriteExt, ReadBuf, AsyncReadExt};
+use futures::{TryFutureExt, TryStreamExt};
+use tokio::io::{AsyncRead, AsyncWriteExt, ReadBuf};
 
 pub struct ReadThroughReader {
     cache_file: Option<std::fs::File>,
@@ -13,7 +13,7 @@ pub struct ReadThroughReader {
 impl ReadThroughReader {
     fn read_from_source_async(self: &mut Pin<&mut Self>, cx: &mut Context<'_>, buf: &mut ReadBuf<'_>) -> Poll<std::io::Result<()>> {
         let before = buf.filled().len();
-        let mut pinned_source = unsafe {Pin::new_unchecked(&mut self.source)};
+        let pinned_source = unsafe {Pin::new_unchecked(&mut self.source)};
         let poll_result = pinned_source.poll_read(cx, buf);
         match poll_result {
             Poll::Pending => {},
@@ -39,7 +39,7 @@ impl AsyncRead for ReadThroughReader {
                 if result.is_ok() {
                     if let Some(cache_file) = &mut self.cache_file {
                         let new_filled = buf.filled().len();
-                        let new_bytes = new_filled - old_filled;
+                        let _new_bytes = new_filled - old_filled;
                         cache_file.write(&buf.filled()[old_filled..]).unwrap();
                         cache_file.flush().unwrap();
                     }
@@ -133,7 +133,7 @@ impl CacheableResource for url::Url {
 
 #[cfg(test)]
 mod tests {
-    use std::fs::read;
+    
     use tokio::io::AsyncReadExt;
     use crate::resource::{CacheableResource, ReadThroughReader};
 
@@ -162,7 +162,7 @@ mod tests {
     #[tokio::test]
     async fn it_can_work_with_example_com() {
         env_logger::init();
-        let url_str = "http://cdn.gea.esac.esa.int/Gaia/gdr3/gaia_source/GaiaSource_000000-003111.csv.gz";
+        let _url_str = "http://cdn.gea.esac.esa.int/Gaia/gdr3/gaia_source/GaiaSource_000000-003111.csv.gz";
         let url_str = "https://example.com/index.html";
         let url = url::Url::parse(url_str).unwrap();
         let path = url.absolute_cache_path();

@@ -1,7 +1,7 @@
 use std::io::{Read};
 use csv_async::AsyncReader;
-use tokio::io::{AsyncRead, BufReader};
-use tokio_util::compat::{TokioAsyncReadCompatExt, FuturesAsyncReadCompatExt, Compat};
+
+use tokio_util::compat::{Compat};
 use url;
 
 pub struct ESA {

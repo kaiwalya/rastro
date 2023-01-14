@@ -1,11 +1,11 @@
 mod catalog_row;
-use std::fmt;
-use std::fmt::{Formatter, Pointer};
-use std::future::Future;
-use std::pin::Pin;
-use std::task::{Context, Poll};
-use async_trait::async_trait;
-use tokio::io::{AsyncBufRead, AsyncBufReadExt};
+
+
+
+
+
+
+
 use crate::eso::catalog_row::CatalogRow;
 
 pub struct Tycho2 {
@@ -73,7 +73,7 @@ impl Tycho2 {
 
 #[cfg(test)]
 mod tests {
-    use futures::{StreamExt, TryStreamExt};
+    use futures::{StreamExt};
     use tokio_util::compat::TokioAsyncReadCompatExt;
     use crate::eso::{Tycho2};
     use crate::eso::catalog_row::CatalogRow;
@@ -86,7 +86,7 @@ mod tests {
         let tycho2 = Tycho2::new();
 
         let catalog_bin_reader = tycho2.catalog_url.download_async().await;
-        let mut csv_reader = csv_async::AsyncReaderBuilder::new()
+        let csv_reader = csv_async::AsyncReaderBuilder::new()
             .has_headers(false)
             .delimiter(b'|')
             .create_reader(catalog_bin_reader.compat());

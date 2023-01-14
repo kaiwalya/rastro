@@ -3,7 +3,7 @@ use crate::load_fits::ParsedFitsFileHDU;
 
 
 pub fn debayer(hdu: &ParsedFitsFileHDU) -> Option<Array<f32, Ix3>> {
-    let bayer_pattern = hdu.bayer_pattern().unwrap();
+    let _bayer_pattern = hdu.bayer_pattern().unwrap();
     let array = hdu.data_copy_f32()?
         //.slice(ndarray::s![0..8, 0..8]).to_owned()
         ;

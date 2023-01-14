@@ -1,9 +1,9 @@
 use std::error::Error;
 use std::fmt;
-use std::fmt::{Debug, Display, Formatter};
+use std::fmt::{Debug, Formatter};
 use std::path::Path;
 use rustronomy_fits::{Extension, Fits, HeaderDataUnit};
-use ndarray::{Array, Ix3, IxDyn};
+use ndarray::{Array, IxDyn};
 
 pub struct ParsedFitsFile {
     f: Fits

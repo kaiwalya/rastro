@@ -2,9 +2,9 @@ use std::error::Error;
 use std::io::{ErrorKind, Write};
 use std::io::ErrorKind::WouldBlock;
 use std::net::TcpStream;
-use quick_xml::events::{BytesText, Event};
-use serde::{Deserialize, Serialize};
-use tokio::task::JoinHandle;
+use quick_xml::events::{Event};
+use serde::{Deserialize};
+
 use crate::{IncomingMsg};
 use crate::config_file::ConnectionSpec;
 
@@ -81,7 +81,7 @@ impl IndiReaderLoopXMLProcessor {
             },
 
             Ok(ref event) => match event {
-                Event::Start(ref start) => {
+                Event::Start(ref _start) => {
                     self.buff.extend_from_slice("<".as_bytes());
                     self.buff.extend(&**event);
                     self.buff.extend_from_slice(">".as_bytes());
@@ -89,7 +89,7 @@ impl IndiReaderLoopXMLProcessor {
                     Ok((None, true))
                 },
 
-                Event::End(ref end) => {
+                Event::End(ref _end) => {
                     self.buff.extend_from_slice("</".as_bytes());
                     self.buff.extend(&**event);
                     self.buff.extend_from_slice(">".as_bytes());
@@ -119,7 +119,7 @@ impl IndiReaderLoopXMLProcessor {
                     }
                 },
 
-                Event::Text(ref t) => {
+                Event::Text(ref _t) => {
                     self.buff.extend(&**event);
                     Ok((None, true))
                 },
@@ -197,14 +197,14 @@ impl IndiReaderLoop {
                 }
 
                 Ok(ref event) => match event {
-                    Event::Start(ref start) => {
+                    Event::Start(ref _start) => {
                         buff.extend_from_slice("<".as_bytes());
                         buff.extend(&**event);
                         buff.extend_from_slice(">".as_bytes());
                         depth = depth + 1;
                     },
 
-                    Event::End(ref end) => {
+                    Event::End(ref _end) => {
                         buff.extend_from_slice("</".as_bytes());
                         buff.extend(&**event);
                         buff.extend_from_slice(">".as_bytes());
@@ -233,7 +233,7 @@ impl IndiReaderLoop {
                         }
                     },
 
-                    Event::Text(ref t) => {
+                    Event::Text(ref _t) => {
                         buff.extend(&**event);
                     },
 
@@ -260,7 +260,7 @@ impl IndiConnection {
     pub fn connect(spec: &ConnectionSpec) -> Result<IndiConnection, Box<dyn Error>> {
         let connection_str = format!("{}:{}", spec.host, spec.port);
 
-        let mut stream = std::net::TcpStream::connect(&connection_str).unwrap();
+        let stream = std::net::TcpStream::connect(&connection_str).unwrap();
         let (tx, rx) = std::sync::mpsc::channel::<IncomingMsg>();
         let r_stream = stream.try_clone().unwrap();
 

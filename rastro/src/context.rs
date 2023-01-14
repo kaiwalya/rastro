@@ -1,14 +1,12 @@
 use slog::Logger;
-use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
+
+use std::sync::atomic::{AtomicUsize, Ordering};
 use slog_scope::logger;
 
 pub struct Context {
     pub id: String,
     pub logger: Logger
 }
-
-static CONTEXT_COUNTER: AtomicUsize = AtomicUsize::new(0);
 
 impl Context {
     pub fn new() -> Self {

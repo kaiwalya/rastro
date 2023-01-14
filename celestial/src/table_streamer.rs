@@ -1,5 +1,5 @@
-use std::pin::Pin;
-use std::task::{Context, Poll};
+
+
 use csv_async::AsyncReader;
 
 
@@ -56,7 +56,7 @@ impl<R: futures::AsyncRead + Unpin + Send> TableStreamer<R> {
 #[cfg(test)]
 mod tests {
     use crate::table_streamer::TableStreamer;
-    use futures::StreamExt;
+    
 
     #[tokio::test]
     async fn it_works_with_headers() {

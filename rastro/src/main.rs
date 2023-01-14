@@ -33,9 +33,9 @@ fn main() -> Result<(), Box<dyn Error>>{
                     std::thread::sleep(std::time::Duration::from_millis(100));
                     //break;
                 },
-                Some(msg) => {
+                Some(_msg) => {
                     eprintln!("main_thread got msg");
-                    while let Some(msg) = conn.recv_or_none()? {
+                    while let Some(_msg) = conn.recv_or_none()? {
                         eprintln!("main_thread got msg+");
                     }
                 }
