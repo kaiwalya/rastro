@@ -1,25 +1,33 @@
 use super::common::{IndiState};
 
 
-#[derive(Debug, serde::Deserialize, PartialEq)]
+#[derive(Debug, serde::Deserialize, serde::Serialize, PartialEq)]
 pub struct DefLightValue {
+    #[serde(rename = "@name")]
     pub name: String,
+    #[serde(rename = "@label")]
     pub label: String,
 
-    #[serde(alias = "$value", default)]
+    #[serde(rename = "$text")]
     pub value: IndiState,
 
     #[serde(flatten)]
     extra: std::collections::HashMap<String, String>,
 }
 
-#[derive(Debug, serde::Deserialize, PartialEq)]
+#[derive(Debug, serde::Deserialize, serde::Serialize, PartialEq)]
 pub struct DefLightVector {
+    #[serde(rename = "@name")]
     pub name: String,
+    #[serde(rename = "@label")]
     pub label: String,
+    #[serde(rename = "@group")]
     pub group: String,
+    #[serde(rename = "@state")]
     pub state: IndiState,
+    #[serde(rename = "@device")]
     pub device: String,
+    #[serde(rename = "@timestamp")]
     pub timestamp: String,
 
     #[serde(rename = "defLight")]

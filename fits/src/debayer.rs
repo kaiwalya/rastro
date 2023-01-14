@@ -1,8 +1,9 @@
-use ndarray::{Array, Ix3};
+use ndarray::{Array, Ix3, s};
 use crate::load_fits::ParsedFitsFileHDU;
 
 
 pub fn debayer(hdu: &ParsedFitsFileHDU) -> Option<Array<f32, Ix3>> {
+    let bayer_pattern = hdu.bayer_pattern().unwrap();
     let array = hdu.data_copy_f32()?
         //.slice(ndarray::s![0..8, 0..8]).to_owned()
         ;
@@ -19,6 +20,9 @@ pub fn debayer(hdu: &ParsedFitsFileHDU) -> Option<Array<f32, Ix3>> {
     */
 
     let shape = array.shape();
+    if shape.len() == 3 {
+        return Some(array.slice(s![.., .., ..]).to_owned());
+    }
     let rgb_shape: [usize; 3] = [shape[0] - 1, shape[1] - 1, 3];
 
     //log::info!("v_pixel shape {:?}", rgb_shape);

@@ -1,5 +1,5 @@
 
-#[derive(Debug, serde::Deserialize, PartialEq, Default)]
+#[derive(Debug, serde::Deserialize, serde::Serialize, PartialEq, Default)]
 pub enum IndiState {
     #[default]
     Idle, 
@@ -9,12 +9,11 @@ pub enum IndiState {
 }
 
 
-#[derive(Debug, serde::Deserialize, PartialEq)]
+#[derive(Debug, serde::Deserialize, serde::Serialize, PartialEq)]
 pub enum IndiPermission {
-    #[serde(alias = "ro")] RO,
-    #[serde(alias = "rw")] RW,
-    #[serde(alias = "wo")] WO,
-
+    #[serde(rename = "ro")] RO,
+    #[serde(rename = "rw")] RW,
+    #[serde(rename = "wo")] WO,
 }
 
 

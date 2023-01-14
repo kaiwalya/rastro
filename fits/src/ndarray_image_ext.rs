@@ -27,7 +27,7 @@ impl<'a> NDArrayExt for ArrayView<'a, f32, Ix2> {
 
     fn create_gray_image(&self) -> image::GrayImage {
         let params = StretchParams {
-            scale: 255.0 / (self.mean().unwrap() * 2.0)
+            scale: 255.0 / (self.mean().unwrap() * 4.0)
         };
         let shape = self.shape();
         let mut buff: image::GrayImage = image::ImageBuffer::new(shape[0] as u32, shape[1] as u32);
@@ -44,7 +44,7 @@ impl<'a> NDArrayExt for ArrayView<'a, f32, Ix2> {
 impl NDArrayExt for Array<f32, Ix3> {
     fn create_rgba_image(self: &Array<f32, Ix3>) -> image::RgbaImage {
         let params = StretchParams {
-            scale: 255.0 / (self.mean().unwrap() * 2.0)
+            scale: 255.0 / (self.mean().unwrap() * 4.0)
         };
         let shape = self.shape();
         let mut buff: image::RgbaImage = image::ImageBuffer::new(shape[0] as u32, shape[1] as u32);

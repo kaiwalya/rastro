@@ -1,4 +1,4 @@
-#[derive(Debug, serde::Deserialize, PartialEq)]
+#[derive(Debug, serde::Deserialize, serde::Serialize, PartialEq)]
 pub struct DelProperty {
     pub device: String,
 
@@ -9,8 +9,6 @@ pub struct DelProperty {
     #[serde(flatten)]
     extra: std::collections::HashMap<String, String>,
 }
-
-
 
 impl std::fmt::Display for DelProperty {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

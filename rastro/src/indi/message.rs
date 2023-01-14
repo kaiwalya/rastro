@@ -1,6 +1,6 @@
 
 
-#[derive(Debug, serde::Deserialize, PartialEq)]
+#[derive(Debug, serde::Deserialize, serde::Serialize, PartialEq)]
 pub struct Message {
     device: String,
     message: String,

@@ -1,30 +1,40 @@
 use super::common::{IndiState, IndiPermission};
 
 
-#[derive(Debug, serde::Deserialize, PartialEq)]
+#[derive(Debug, serde::Deserialize, serde::Serialize, PartialEq)]
 pub struct DefBlobValue {
+    #[serde(rename = "@name")]
     pub name: String,
+    #[serde(rename = "@label")]
     pub label: String,
 
-    #[serde(alias = "$value", default)]
+    #[serde(rename = "$text")]
     pub value: String,
 
     #[serde(flatten)]
     extra: std::collections::HashMap<String, String>,
 }
 
-#[derive(Debug, serde::Deserialize, PartialEq)]
+#[derive(Debug, serde::Deserialize, serde::Serialize, PartialEq)]
 pub struct DefBlobVector {
+    #[serde(rename = "@name")]
     pub name: String,
+    #[serde(rename = "@label")]
     pub label: String,
+    #[serde(rename = "@group")]
     pub group: String,
+    #[serde(rename = "@state")]
     pub state: IndiState,
+    #[serde(rename = "@device")]
     pub device: String,
+    #[serde(rename = "@perm")]
     pub perm: IndiPermission,
+    #[serde(rename = "@timeout")]
     pub timeout: f64,
+    #[serde(rename = "@timestamp")]
     pub timestamp: String,
 
-    #[serde(rename = "defBLOB")]
+    #[serde(rename = "defBLOB", default)]
     pub blobs: Vec<DefBlobValue>,
 
     #[serde(flatten)]
@@ -52,24 +62,28 @@ impl std::fmt::Display for DefBlobValue {
 }
 
 
-#[derive(Debug, serde::Deserialize, PartialEq)]
+#[derive(Debug, serde::Deserialize, serde::Serialize, PartialEq)]
 pub struct SetBlobValue {
+    #[serde(rename = "@name")]
     pub name: String,
 
+    #[serde(rename = "@size")]
     pub size: usize,
 
+    #[serde(rename = "@enclen")]
     pub enclen: usize,
 
+    #[serde(rename = "@format")]
     pub format: String,
 
-    #[serde(alias = "$value", default)]
+    #[serde(rename = "$text")]
     pub value: String,
 
     #[serde(flatten)]
     extra: std::collections::HashMap<String, String>,
 }
 
-#[derive(Debug, serde::Deserialize, PartialEq)]
+#[derive(Debug, serde::Deserialize, serde::Serialize, PartialEq)]
 pub struct SetBlobVector {
     pub name: String,
     pub state: IndiState,

@@ -1,40 +1,52 @@
 use super::common::{IndiState, IndiPermission};
 
 
-#[derive(Debug, serde::Deserialize, PartialEq)]
+#[derive(Debug, serde::Deserialize, serde::Serialize, PartialEq)]
 pub enum IndiSwitchOptions {
     AnyOfMany, OneOfMany, AtMostOne
 }
 
 
-#[derive(Debug, serde::Deserialize, PartialEq)]
+#[derive(Debug, serde::Deserialize, serde::Serialize, PartialEq)]
 pub enum IndiSwitch {
     On,
     Off,
 }
 
-#[derive(Debug, serde::Deserialize, PartialEq)]
+#[derive(Debug, serde::Deserialize, serde::Serialize, PartialEq)]
 pub struct DefSwitchValue {
+    #[serde(rename = "@name")]
     pub name: String,
+
+    #[serde(rename = "@label")]
     pub label: String,
 
-    #[serde(alias = "$value")]
+    #[serde(rename = "$text")]
     pub value: IndiSwitch,
 
     #[serde(flatten)]
     extra: std::collections::HashMap<String, String>,
 }
 
-#[derive(Debug, serde::Deserialize, PartialEq)]
+#[derive(Debug, serde::Deserialize, serde::Serialize, PartialEq)]
 pub struct DefSwitchVector {
+    #[serde(rename = "@name")]
     pub name: String,
+    #[serde(rename = "@label")]
     pub label: String,
+    #[serde(rename = "@group")]
     pub group: String,
+    #[serde(rename = "@state")]
     pub state: IndiState,
+    #[serde(rename = "@rule")]
     pub rule: IndiSwitchOptions,
+    #[serde(rename = "@device")]
     pub device: String,
+    #[serde(rename = "@perm")]
     pub perm: IndiPermission,
+    #[serde(rename = "@timeout")]
     pub timeout: f64,
+    #[serde(rename = "@timestamp")]
     pub timestamp: String,
 
     #[serde(rename = "defSwitch")]
@@ -70,23 +82,29 @@ impl std::fmt::Display for DefSwitchValue {
 }
 
 
-#[derive(Debug, serde::Deserialize, PartialEq)]
+#[derive(Debug, serde::Deserialize, serde::Serialize, PartialEq)]
 pub struct SetSwitchValue {
+    #[serde(rename = "@name")]
     pub name: String,
 
-    #[serde(alias = "$value", default)]
+    #[serde(rename = "$text")]
     pub value: String,
 
     #[serde(flatten)]
     extra: std::collections::HashMap<String, String>,
 }
 
-#[derive(Debug, serde::Deserialize, PartialEq)]
+#[derive(Debug, serde::Deserialize, serde::Serialize, PartialEq)]
 pub struct SetSwitchVector {
+    #[serde(rename = "@name")]
     pub name: String,
+    #[serde(rename = "@state")]
     pub state: IndiState,
+    #[serde(rename = "@device")]
     pub device: String,
+    #[serde(rename = "@timeout")]
     pub timeout: f64,
+    #[serde(rename = "@timestamp")]
     pub timestamp: String,
 
     #[serde(rename = "oneSwitch")]

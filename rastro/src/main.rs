@@ -1,87 +1,71 @@
-mod kalakaar;
+use std::error::Error;
+use std::sync::Arc;
+use std::sync::atomic::AtomicBool;
+use crate::config_file::ConfigFile;
+use crate::indi::connection::{IndiConnection};
+use crate::indi::get_properties::GetProperties;
+use crate::indi::IncomingMsg;
+mod indi;
+mod config_file;
+mod context;
 
-pub fn main() {
-}
+//#[tokio::main(flavor = "multi_thread", worker_threads=8)]
+fn main() -> Result<(), Box<dyn Error>>{
 
+    //let _log = slog_envlogger::init().unwrap();
 
+    //let ctx = Context::new();
 
+    let quit = Arc::new(AtomicBool::new(false));
 
-#[cfg(test)]
-mod tests {
-    use std::io::ErrorKind;
-    use std::sync::Arc;
-    use std::sync::atomic::AtomicUsize;
-    use std::sync::atomic::Ordering::SeqCst;
-    use crate::kalakaar::{ActorSystem};
+    let config = ConfigFile::load_default()?;
+    for connection_spec in &config.connections {
 
-    #[test]
-    fn it_does_not_leave_threads_hanging() {
-        let counter = Arc::new(AtomicUsize::new(0));
-        let mut sys = ActorSystem::new();
-        {
-            let counter_clone = counter.clone();
-            let actor_ref = sys.create_actor(move |_: String| {
-                counter_clone.fetch_add(1, SeqCst);
-                Ok(())
-            });
+        let mut conn = IndiConnection::connect(connection_spec)?;
+        conn.send(&IncomingMsg::GetProperties(GetProperties {version: "1.7".to_string()}))?;
 
-            let handle = std::thread::spawn(move|| {
-                actor_ref.send(format!("test 1").to_string()).unwrap();
-                actor_ref.send(format!("test 2").to_string()).unwrap();
-            });
+        let mut counter = 0;
+        while counter < 20 {
+            let msg = conn.recv_or_none()?;
+            match msg {
+                None => {
+                    eprintln!("main_thread sleeping");
+                    std::thread::sleep(std::time::Duration::from_millis(100));
+                    //break;
+                },
+                Some(msg) => {
+                    eprintln!("main_thread got msg");
+                    while let Some(msg) = conn.recv_or_none()? {
+                        eprintln!("main_thread got msg+");
+                    }
+                }
+            }
 
-            assert_eq!(sys.get_thread_count(), 1, "actor threads not found");
-            handle.join().unwrap();
-
+            counter = counter + 1;
         }
-        std::thread::sleep(std::time::Duration::from_millis(500));
-        assert_eq!(sys.get_thread_count(), 0, "actor threads left alive");
-        assert_eq!(counter.load(SeqCst), 2, "actor did not get all messages");
+
+
+        eprintln!("main_thread after bulk read");
+        std::thread::sleep(std::time::Duration::from_millis(3000));
 
     }
 
-    #[test]
-    fn it_deals_with_erroring_actors() {
-        let mut sys = ActorSystem::new();
-        {
-            let actor_ref = sys.create_actor(|_: String| {
-                Err(std::io::Error::from(ErrorKind::AddrInUse))
-            });
-            assert_eq!(sys.get_thread_count(), 1, "actor threads not found");
+    eprintln!("Dropped");
+    std::thread::sleep(std::time::Duration::from_millis(3000));
+    eprintln!("Dropped + 3sec");
 
+    //info!(ctx.logger, "{:?}", config);
 
-            let handle = std::thread::spawn(move|| {
-                actor_ref.send(format!("test 1").to_string()).unwrap();
-            });
+    signal_hook::flag::register_conditional_shutdown(
+        signal_hook::consts::SIGINT,
+        1,
+        quit.clone()
+    ).unwrap();
 
-            handle.join().unwrap();
-            std::thread::sleep(std::time::Duration::from_millis(200));
-            assert_eq!(sys.get_thread_count(), 0, "actor threads left alive")
-        }
-    }
+    signal_hook::flag::register(
+        signal_hook::consts::SIGINT,
+        quit.clone()
+    ).unwrap();
 
-    #[test]
-    fn it_cannot_send_to_stopped_actors() {
-
-        let actor_ref: Option<_>;
-        {
-            let mut sys = ActorSystem::new();
-            actor_ref = Some(sys.create_actor(|_: String| {
-                Err(std::io::Error::from(ErrorKind::AddrInUse))
-            }));
-            assert_eq!(sys.get_thread_count(), 1, "actor threads not found");
-
-
-            let actor_ref = actor_ref.clone();
-            let handle = std::thread::spawn(move|| {
-                actor_ref.unwrap().send(format!("test 1").to_string()).unwrap()
-            });
-
-            handle.join().unwrap();
-            std::thread::sleep(std::time::Duration::from_millis(200));
-            assert_eq!(sys.get_thread_count(), 0, "actor threads left alive")
-        }
-        assert_eq!(actor_ref.unwrap().send("test".to_string()).is_err(), true, "sends should fail after stopping actor system")
-
-    }
+    Ok(())
 }

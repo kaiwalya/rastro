@@ -139,7 +139,8 @@ pub fn plot(name: String, array: ndarray::ArrayView<f32, ndarray::Ix1>) {
 }
 
 pub fn fits() {
-    let f = ParsedFitsFile::parse("/Users/k/astro/captures/HHetc-light2C-g94-2022-12-18-1671352856041.fits".as_ref()).unwrap();
+    //let f = ParsedFitsFile::parse("/Users/k/astro/captures/HHetc-light2C-g94-2022-12-18-1671352856041.fits".as_ref()).unwrap();
+    let f = ParsedFitsFile::parse("/Users/k/sim_polaris.fits".as_ref()).unwrap();
     log::info!("{:?}", f);
 
     let hdu0 = f.hdu(0).unwrap();
