@@ -6,10 +6,9 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-slog = "2.7.0"
-slog-stdlog = "4.1.1"
-slog-envlogger = "2.2.0"
-slog-scope = "4.4.0"
+
+log = "0.4.17"
+pretty_env_logger = "0.4.0"
 
 async-trait = "0.1.61"
 tokio = {version = "1.24.1", features = ["full"]}

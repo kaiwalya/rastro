@@ -70,8 +70,8 @@ pub struct SetBlobValue {
     #[serde(rename = "@size")]
     pub size: usize,
 
-    #[serde(rename = "@enclen")]
-    pub enclen: usize,
+    #[serde(rename = "@len")]
+    pub len: usize,
 
     #[serde(rename = "@format")]
     pub format: String,
@@ -85,10 +85,15 @@ pub struct SetBlobValue {
 
 #[derive(Debug, serde::Deserialize, serde::Serialize, PartialEq)]
 pub struct SetBlobVector {
+    #[serde(rename = "@name")]
     pub name: String,
+    #[serde(rename = "@state")]
     pub state: IndiState,
+    #[serde(rename = "@device")]
     pub device: String,
+    #[serde(rename = "@timeout")]
     pub timeout: f64,
+    #[serde(rename = "@timestamp")]
     pub timestamp: String,
 
     #[serde(rename = "oneBLOB")]
@@ -104,7 +109,7 @@ impl std::fmt::Display for SetBlobVector {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{} {}::{}(blob)\n", self.state, self.device, self.name).unwrap();
         for v in &self.blobs {
-            write!(f, "\t{}\n", v).unwrap();
+            write!(f, "\tformat: {}, len: {}\n", v.format, v.len).unwrap();
         }
         if !self.extra.is_empty() {
             write!(f, "{:?}\n", self.extra).unwrap();

@@ -23,11 +23,11 @@ pub struct ConfigFile {
 impl ConfigFile {
     pub fn load_default() -> Result<ConfigFile, Box<dyn Error>> {
         toml::from_str(r###"
-            // [[connections]]
-            // name = "mobile-mini"
-            // protocol = "indi"
-            // host = "mobile-mini.local"
-            // port = 7624
+            #[[connections]]
+            #name = "mobile-mini"
+            #protocol = "indi"
+            #host = "mobile-mini.local"
+            #port = 7624
 
             [[connections]]
             name = "local"

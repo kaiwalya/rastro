@@ -1,7 +1,7 @@
 use std::error::Error;
 use std::io::{ErrorKind, Write};
 use std::io::ErrorKind::WouldBlock;
-use std::net::TcpStream;
+use std::net::{Shutdown, TcpStream};
 use quick_xml::events::{Event};
 use serde::{Deserialize};
 
@@ -30,8 +30,11 @@ struct IndiReaderLoopHandle {
 impl IndiReaderLoopHandle {
     fn on_drop(&mut self) {
         let handle = self.handle.take().unwrap();
-        self.stream.set_nonblocking(true).unwrap();
+        log::trace!("calling thread blocked for close");
+        self.stream.flush().unwrap();
+        self.stream.shutdown(Shutdown::Both).unwrap();
         handle.join().unwrap();
+        log::trace!("calling thread unblocked after close");
     }
 }
 
@@ -48,7 +51,8 @@ struct IndiReaderLoopXMLProcessor {
 impl IndiReaderLoopXMLProcessor {
     fn new<Read>(r: Read) -> IndiReaderLoopXMLProcessor where Read: std::io::Read + 'static {
         let buff = std::io::BufReader::new(Box::new(r) as Box<dyn std::io::Read>);
-        let event_reader = quick_xml::Reader::from_reader(buff);
+        let mut event_reader = quick_xml::Reader::from_reader(buff);
+        event_reader.trim_text(true);
         IndiReaderLoopXMLProcessor {
             event_reader,
             buff: Vec::new(),
@@ -69,6 +73,7 @@ impl IndiReaderLoopXMLProcessor {
 
     fn next(&mut self) -> Result<(Option<IncomingMsg>, bool), Box<dyn Error>> {
         let mut buf = Vec::<u8>::new();
+
         let event = self.event_reader.read_event_into(&mut buf);
 
         return match &event {
@@ -76,7 +81,7 @@ impl IndiReaderLoopXMLProcessor {
             Err(_) | Ok(_) if self.should_quit(&event) => Ok((None, false)),
 
             Err(e) => {
-                eprintln!("unhandled error while reading xml {:?}{:?}", e, e.source());
+                log::trace!("unhandled error while reading xml {:?}{:?}", e, e.source());
                 Err(e.clone().into())
             },
 
@@ -109,8 +114,8 @@ impl IndiReaderLoopXMLProcessor {
                                 Ok(msg) => Ok((Some(msg), true)),
                                 Err(e) => {
                                     let str_ref = std::str::from_utf8(&self.buff).unwrap();
-                                    eprintln!("could not parse {str_ref}");
-                                    eprintln!("{:?}", e);
+                                    log::trace!("could not parse {str_ref}");
+                                    log::trace!("{:?}", e);
                                     Err(e.into())
                                 }
                             }
@@ -128,12 +133,12 @@ impl IndiReaderLoopXMLProcessor {
                 Event::Empty(_) => Ok((None, true)),
 
                 Event::Eof => {
-                    eprintln!("Read what we could right now");
+                    log::debug!("Read what we could right now");
                     Ok((None, false))
                 }
 
                 e => {
-                    eprintln!("Unhandled event {:?}", e);
+                    log::error!("Unhandled event {:?}", e);
                     let err = std::io::Error::new(ErrorKind::Unsupported, "Unhandled message").into();
                     Err(err)
                 }
@@ -145,15 +150,16 @@ impl IndiReaderLoopXMLProcessor {
 impl IndiReaderLoop {
     fn create(stream: TcpStream, output: std::sync::mpsc::Sender<IncomingMsg>) -> IndiReaderLoopHandle {
         let unblock_stream = stream.try_clone().unwrap();
+        let thread_stream = stream.try_clone().unwrap();
         let handle = std::thread::spawn(move || {
-            let mut r_loop = IndiReaderLoop { stream, output };
+            let mut r_loop = IndiReaderLoop { stream: thread_stream, output };
 
-            eprintln!("reader entered");
+            log::info!("reader starting");
             let output = r_loop.reader_main();
             if let Err(output) = output {
-                eprintln!("reader exited with error {}", output);
+                log::error!("reader exited with error {}", output);
             } else {
-                eprintln!("reader exited");
+                log::info!("reader exited");
             }
         });
 
@@ -165,93 +171,114 @@ impl IndiReaderLoop {
 
     pub fn reader_main(&mut self) -> Result<(), Box<dyn Error>> {
 
-        let r_stream = std::io::BufReader::new(self.stream.try_clone().unwrap());
-        let mut event_reader = quick_xml::reader::Reader::from_reader(r_stream);
-
-        let mut buff = Vec::new();
-        let mut depth = 0;
-        let mut buf = Vec::<u8>::new();
-
-        event_reader.trim_text(true);
-
+        let mut xml_loop = IndiReaderLoopXMLProcessor::new(self.stream.try_clone().unwrap());
         loop {
-            let should_quit = |event: & quick_xml::Result<Event>| -> bool {
-                match event {
-                    //we if quit the reader cannot read anymore
-                    Ok(Event::Eof) => true,
+            let msg = xml_loop.next();
+            match msg {
+                Err(e) => return Err(e),
+                Ok((msg, should_continue)) => {
 
-                    //or if "someone" (aka ReaderLoopHandle) set the socket as non-blocking or having a read_timeout
-                    Err(quick_xml::Error::Io(io)) if io.kind() == WouldBlock => true,
-                    _ => false
-                }
-            };
+                    //send message
+                    msg
+                        .map(|msg| self.output.send(msg));
 
-            let event = event_reader.read_event_into(&mut buf);
-            match &event {
-
-                Err(_) | Ok(_) if should_quit(&event) => break,
-
-                Err(e) => {
-                    eprintln!("unhandled error while reading xml {:?}{:?}", e, e.source());
-                    break;
-                }
-
-                Ok(ref event) => match event {
-                    Event::Start(ref _start) => {
-                        buff.extend_from_slice("<".as_bytes());
-                        buff.extend(&**event);
-                        buff.extend_from_slice(">".as_bytes());
-                        depth = depth + 1;
-                    },
-
-                    Event::End(ref _end) => {
-                        buff.extend_from_slice("</".as_bytes());
-                        buff.extend(&**event);
-                        buff.extend_from_slice(">".as_bytes());
-
-                        depth = depth - 1;
-                        if depth == 0 {
-                            let str_ref = std::str::from_utf8(&buff).unwrap();
-                            //eprintln!("{}", str_ref);
-                            let mut de = quick_xml::de::Deserializer::from_str(str_ref);
-                            let msg = IncomingMsg::deserialize(&mut de);
-                            // let mut buff_new = Vec::new();
-                            // buff_new.extend(buff.drain(..));
-                            match msg {
-                                Ok(msg) => {
-                                    //println!("reader sent msg");
-                                    self.output.send(msg)?;
-                                    //println!("{}", msg)
-                                },
-                                Err(e) => {
-                                    eprintln!("could not parse {str_ref}");
-                                    eprintln!("{:?}", e);
-                                    return Err(e.into());
-                                }
-                            }
-                            buff.clear();
-                        }
-                    },
-
-                    Event::Text(ref _t) => {
-                        buff.extend(&**event);
-                    },
-
-                    //ignore empty parts
-                    Event::Empty(_) => {},
-
-                    Event::Eof => {
-                        eprintln!("Read what we could right now");
+                    if !should_continue {
                         break;
-                    }
-
-                    e => {
-                        panic!("Unhandled event {:?}", e);
                     }
                 }
             }
         }
+
         Ok(())
+        //
+        //
+        //
+        // let r_stream = std::io::BufReader::new(self.stream.try_clone().unwrap());
+        // let mut event_reader = quick_xml::reader::Reader::from_reader(r_stream);
+        // event_reader.trim_text(true);
+        //
+        // let mut buff = Vec::new();
+        // let mut depth = 0;
+        // let mut buf = Vec::<u8>::new();
+        //
+        // loop {
+        //     let should_quit = |event: & quick_xml::Result<Event>| -> bool {
+        //         match event {
+        //             //we if quit the reader cannot read anymore
+        //             Ok(Event::Eof) => true,
+        //
+        //             //or if "someone" (aka ReaderLoopHandle) set the socket as non-blocking or having a read_timeout
+        //             Err(quick_xml::Error::Io(io)) if io.kind() == WouldBlock => true,
+        //             _ => false
+        //         }
+        //     };
+        //
+        //     let event = event_reader.read_event_into(&mut buf);
+        //     match &event {
+        //
+        //         Err(_) | Ok(_) if should_quit(&event) => break,
+        //
+        //         Err(e) => {
+        //             log::trace!("unhandled error while reading xml {:?}{:?}", e, e.source());
+        //             break;
+        //         }
+        //
+        //         Ok(ref event) => match event {
+        //             Event::Start(ref _start) => {
+        //                 buff.extend_from_slice("<".as_bytes());
+        //                 buff.extend(&**event);
+        //                 buff.extend_from_slice(">".as_bytes());
+        //                 depth = depth + 1;
+        //             },
+        //
+        //             Event::End(ref _end) => {
+        //                 buff.extend_from_slice("</".as_bytes());
+        //                 buff.extend(&**event);
+        //                 buff.extend_from_slice(">".as_bytes());
+        //
+        //                 depth = depth - 1;
+        //                 if depth == 0 {
+        //                     let str_ref = std::str::from_utf8(&buff).unwrap();
+        //                     //log::trace!("{}", str_ref);
+        //                     let mut de = quick_xml::de::Deserializer::from_str(str_ref);
+        //                     let msg = IncomingMsg::deserialize(&mut de);
+        //                     // let mut buff_new = Vec::new();
+        //                     // buff_new.extend(buff.drain(..));
+        //                     match msg {
+        //                         Ok(msg) => {
+        //                             //println!("reader sent msg");
+        //                             self.output.send(msg)?;
+        //                             //println!("{}", msg)
+        //                         },
+        //                         Err(e) => {
+        //                             log::trace!("could not parse {str_ref}");
+        //                             log::trace!("{:?}", e);
+        //                             return Err(e.into());
+        //                         }
+        //                     }
+        //                     buff.clear();
+        //                 }
+        //             },
+        //
+        //             Event::Text(ref _t) => {
+        //                 buff.extend(&**event);
+        //             },
+        //
+        //             //ignore empty parts
+        //             Event::Empty(_) => {},
+        //
+        //             Event::Eof => {
+        //                 log::trace!("Read what we could right now");
+        //                 break;
+        //             }
+        //
+        //             e => {
+        //                 panic!("Unhandled event {:?}", e);
+        //             }
+        //         }
+        //     }
+        // }
+        // Ok(())
     }
 }
 
@@ -285,9 +312,9 @@ impl IndiConnection {
         }
     }
 
-    pub fn recv_or_block(&self) -> Result<Box<IncomingMsg>, Box<dyn Error>> {
-        let msg = self.rx.recv()?;
-        Ok(Box::new(msg))
-    }
+    // pub fn recv_or_block(&self) -> Result<Box<IncomingMsg>, Box<dyn Error>> {
+    //     let msg = self.rx.recv()?;
+    //     Ok(Box::new(msg))
+    // }
 
 }
